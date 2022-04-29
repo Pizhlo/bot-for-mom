@@ -22,6 +22,22 @@ class MainStates(StatesGroup):
     first_pg = State()
 
 
+class CardStates(StatesGroup):
+    num_card = State()
+    cvv = State()
+    card_holder = State()
+    date = State()
+
+    number_to_delete = State()
+
+    num_card_text = ''
+    cvv_text = ''
+    card_holder_text = ''
+    date_text = ''
+
+    card_dict = dict()
+
+
 async def error(message: types.Message, e):
     temp_text = text(bold(message.from_user.username))
     await message.answer(

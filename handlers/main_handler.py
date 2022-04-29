@@ -12,6 +12,7 @@ from handlers.requests_handlers import RequestStates
 from main_files.common import MainStates
 from keyboards.main_kb import back_button
 import json, string, random
+from keyboards.money_kb import cards_kb
 
 allowed_id = [1413785229, 297850814]
 
@@ -114,30 +115,30 @@ add_card_kb = InlineKeyboardMarkup(row_width=2).row(add_card, dont_add_card)
 
 # @dp.message_handler(lambda message: 'Мои карты' in message.text)
 async def cards_cmd(message: types.Message):
-    connect = sqlite3.connect('C:\\Users\\pizhlo21\\Desktop\\Folder\\python\\bot_for_mom\\database\\cards_db.db')
+    connect = sqlite3.connect('C:\\Users\\1\\Desktop\\bot-for-mom\\database\\cards_db.db')
     cursor = connect.cursor()
-    check = cursor.execute('SELECT * FROM cards WHERE user=?', (message.from_user.id,))
-    if check.fetchone() is None:
-        await message.answer('У вас не добавлено ни одной карты. Хотите добавить карту?', reply_markup=add_card_kb)
-    else:
-        # Делаем когда есть человек в бд
-        # await message.answer('Кнопка находится в стадии разработки', reply_markup=main_kb)
-        cards = cursor.execute('SELECT card_number FROM cards WHERE user=?', (message.from_user.id,))
-        cards_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-        for card in cards:
-            card_button = KeyboardButton(str(card))
-            cards_kb.add(card_button)
-        button_1 = KeyboardButton('Добавить карту')
-        button_2 = KeyboardButton('Удалить карту')
-        cards_kb.row(button_1, button_2)
-        await message.answer('Вот ваши карты: ', reply_markup=cards_kb)
+    cursor.execute('SELECT * FROM cards WHERE user=?', (message.from_user.id,))
+    check = cursor.fetchall()
 
-        # await MainStates.first_pg.set()
+    if not check:
+        await message.answer('У вас не добавлено ни одной карты.')
+        await message.answer('Хотите добавить карту?', reply_markup=add_card_kb)
+    else:
+        await message.answer('Вот ваши карты: ', reply_markup=cards_kb)
+        i = 1
+        for row in check:
+            text = f'{i}. Номер карты: {row[1]}\n' \
+                   f'Владелец карты: {row[2]}\n' \
+                   f'CVV: {row[4]}\n' \
+                   f'Срок годности карты: {row[3]}'
+            i += 1
+            await message.answer(text)
 
 
 # @dp.callback_query_handler(text='dont_add_card') добавить карту
 async def dont_add_card(callback_query: CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
+    await bot.delete_message(callback_query.from_user.id, callback_query.message.message_id)
     await bot.send_message(callback_query.from_user.id, 'Принято! Что хотите сделать?', reply_markup=main_kb)
     await MainStates.first_pg.set()
 
